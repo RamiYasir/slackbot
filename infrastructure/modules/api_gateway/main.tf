@@ -15,6 +15,7 @@ resource "aws_api_gateway_resource" "add_email" {
     path_part   = "add-email"
 }
 
+
 # POST method
 resource "aws_api_gateway_method" "add_email" {
     rest_api_id   = aws_api_gateway_rest_api.api.id
@@ -30,38 +31,9 @@ resource "aws_api_gateway_integration" "lambda_integration" {
     http_method = aws_api_gateway_method.add_email.http_method
     
     integration_http_method = "POST"
-    type = "MOCK"
+    type = "AWS_PROXY"
 
-    request_templates = {
-        "application/json" = "{\"statusCode\": 200}"
-        "application/json; charset=utf-8" = "{\"statusCode\": 200}"
-        "text/plain" = "{\"statusCode\": 200}"
-    }
-}
-
-# Defines what the client receives
-resource "aws_api_gateway_method_response" "add_email_response" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    resource_id = aws_api_gateway_resource.add_email.id
-    http_method = aws_api_gateway_method.add_email.http_method
-    status_code = "200"
-}
-
-# Defines what the lambda returns
-resource "aws_api_gateway_integration_response" "add_email_integration_response" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    resource_id = aws_api_gateway_resource.add_email.id
-    http_method = aws_api_gateway_method.add_email.http_method
-    status_code = aws_api_gateway_method_response.add_email_response.status_code
-
-    response_templates = {
-        "application/json" = "{\"message\": \"ok\"}"
-    }
-
-    depends_on = [
-                  aws_api_gateway_method.add_email,
-                  aws_api_gateway_integration.lambda_integration
-                ]
+    uri = var.emails_lambda_invoke_arn
 }
 
 
@@ -113,12 +85,12 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
                 ]
 }
 
+
+# Deployment and stage
 resource "aws_api_gateway_deployment" "deployment" {
     depends_on = [
         aws_api_gateway_method.add_email,
         aws_api_gateway_integration.lambda_integration,
-        aws_api_gateway_method_response.add_email_response,
-        aws_api_gateway_integration_response.add_email_integration_response,
         aws_api_gateway_method.add_email_options,
         aws_api_gateway_method_response.add_email_options_response,
         aws_api_gateway_integration_response.options_integration_response,

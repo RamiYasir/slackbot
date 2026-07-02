@@ -1,5 +1,7 @@
 module "api" {
   source = "./modules/api_gateway"
+
+  emails_lambda_invoke_arn = module.lambda.emails_lambda_invoke_arn
 }
 
 module "lambda" {
